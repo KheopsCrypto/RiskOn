@@ -1,0 +1,6 @@
+flask
+numpy
+yfinance
+requests
+pandas
+beautifulsoup4
