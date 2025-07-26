@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ultimate Risk-On Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #151A28;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .score-circle {
+      width: 200px; height: 200px; border-radius: 50%;
+      background: linear-gradient(135deg, #36ff75, #16c9f6, #172042 90%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 40px #36ff7533;
+      margin: 30px 0 10px 0;
+      position: relative;
+      transition: box-shadow .4s;
+    }
+    .score-value {
+      font-size: 3.5em;
+      font-weight: 900;
+      letter-spacing: -2px;
+      color: #fff;
+      text-shadow: 0 2px 12px #000a;
+    }
+    .desc {
+      font-size: 1.3em;
+      margin-bottom: 22px;
+      color: #36ff75;
+      font-weight: bold;
+      letter-spacing: .5px;
+    }
+    .subscore-box {
+      display: flex;
+      gap: 28px;
+      margin: 30px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .subscore {
+      background: #23293d;
+      border-radius: 14px;
+      padding: 18px 32px;
+      min-width: 130px;
+      font-size: 1.1em;
+      text-align: center;
+      box-shadow: 0 0 10px #1117;
+      margin-bottom: 10px;
+      border: 1px solid #252f44;
+    }
+    .footer {
+      margin-top: 50px;
+      font-size: .95em;
+      color: #888b;
+      text-align: center;
+    }
+    pre#debug {
+      background: #21262d;
+      color: #aaf6c2;
+      font-size: .94em;
+      padding: 1em;
+      border-radius: 12px;
+      max-width: 700px;
+      margin-top: 35px;
+      box-shadow: 0 0 8px #101a;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="desc">Ultimate Market Risk-On Sentiment</div>
+  <div class="score-circle" id="scoreCircle">
+    <span class="score-value" id="scoreValue">--</span>
+  </div>
+  <div class="subscore-box" id="subscores"></div>
+  <pre id="debug"></pre>
+  <div class="footer">Created by KheopsCrypto — Dashboard 2025</div>
+
+  <script>
+    function getColor(score) {
+      if(score >= 80) return '#36ff75';
+      if(score >= 55) return '#ffe653';
+      return '#ff3647';
+    }
+    function getMessage(score) {
+      if(score >= 80) return "🚦 RISK-ON: Go for risk assets!";
+      if(score <= 35) return "⚠️ RISK-OFF: Be defensive!";
+      return "ℹ️ Neutral zone, monitor markets.";
+    }
+    async function refreshScore() {
+      try {
+        const resp = await fetch('/riskon/api/riskon');
+        const data = await resp.json();
+
+        // Affichage principal
+        if(data.riskon_score !== undefined && data.riskon_score !== null) {
+          document.getElementById('scoreValue').textContent = data.riskon_score;
+          const circle = document.getElementById('scoreCircle');
+          circle.style.boxShadow = `0 0 60px ${getColor(data.riskon_score)}77`;
+          circle.style.background = `linear-gradient(135deg, ${getColor(data.riskon_score)}, #16c9f6, #172042 90%)`;
+          document.querySelector('.desc').textContent = getMessage(data.riskon_score);
+        } else {
+          document.getElementById('scoreValue').textContent = "--";
+          document.querySelector('.desc').textContent = data.status || "Erreur de récupération des données";
+        }
+
+        // Affichage des sous-scores
+        let sub = '';
+        if(data.scores) {
+          for(let [key, val] of Object.entries(data.scores)){
+            let displayVal = (val === null || val === undefined) ? "<span style='color:#ff3647'>N/A</span>" : `${val}/100`;
+            sub += `<div class="subscore"><b>${key.replace('_',' ').toUpperCase()}</b><br>${displayVal}</div>`;
+          }
+        }
+        document.getElementById('subscores').innerHTML = sub;
+
+        // DEBUG : toutes les valeurs brutes et calculs
+        // document.getElementById('debug').textContent = JSON.stringify(data, null, 2);
+
+      } catch (e) {
+        document.getElementById('scoreValue').textContent = "--";
+        document.querySelector('.desc').textContent = "Erreur de connexion API";
+        document.getElementById('subscores').innerHTML = "";
+        document.getElementById('debug').textContent = e.toString();
+      }
+    }
+    setInterval(refreshScore, 7000);
+    refreshScore();
+  </script>
+</body>
+</html>
