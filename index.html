@@ -98,7 +98,7 @@
     }
     async function refreshScore() {
       try {
-        const resp = await fetch('/riskon/api/riskon');
+        const resp = await fetch('/api/riskon');
         const data = await resp.json();
 
         // Affichage principal
